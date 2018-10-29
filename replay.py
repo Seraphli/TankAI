@@ -40,7 +40,7 @@ class Replay(object):
         return np.array(_s), np.array(_a), np.array(_r), \
                np.array(_t), np.array(_s_)
 
-    def sample(self, batch_size=32):
+    def sample(self, batch_size):
         """Sample a batch of experiences.
         Parameters
         ----------
@@ -63,3 +63,8 @@ class Replay(object):
         idxes = [random.randint(0, len(self._storage) - 1) for _ in
                  range(batch_size)]
         return self._encode_sample(idxes)
+
+    def sample_fn(self):
+        if len(self._storage) < 32 * 20:
+            return None
+        return self.sample(32)

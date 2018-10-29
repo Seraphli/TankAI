@@ -8,8 +8,9 @@ class ModeKeys(object):
 
 
 class NN(object):
-    def __init__(self, sample_fn):
+    def __init__(self, sample_fn, need_summary=True):
         self.sample_fn = sample_fn
+        self.need_summary = need_summary
         self.summary = []
         self.graph = tf.Graph()
         with self.graph.as_default():
@@ -22,24 +23,47 @@ class NN(object):
             self.train_op = self.build_train_op(batch_features, batch_labels)
             self.update_op = self.build_update_op(self.train_net['weights'],
                                                   self.target_net['weights'])
-            self.merged = tf.summary.merge(self.summary)
+            if self.need_summary:
+                self.merged = tf.summary.merge(self.summary)
             self.pred_net = self.build_q_net(self.features_predict['s'],
                                              'target', tf.AUTO_REUSE)
             self.sess = tf.InteractiveSession()
             self.saver = tf.train.Saver(max_to_keep=5)
             init_op = tf.global_variables_initializer()
             self.sess.run(init_op)
+            self.run()
             self.sess.graph.finalize()
-            self.sw_step = 0
-            self.summary_writer = tf.summary.FileWriter(
-                'tf_log/summary', self.sess.graph)
+            if self.need_summary:
+                self.sw_step = 0
+                self.summary_writer = tf.summary.FileWriter(
+                    'tf_log/summary', self.sess.graph)
+
+    def load(self, load_path):
+        checkpoint = tf.train.get_checkpoint_state(load_path)
+        if checkpoint and checkpoint.model_checkpoint_path:
+            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
+            return True
+        return False
+
+    def save(self, save_path):
+        self.saver.save(self.sess, save_path, self.global_step)
+
+    def update_param(self):
+        self.sess.run(self.update_op)
 
     def train(self):
-        _, loss, merged = self.sess.run(
-            [self.train_op, self.train_net['loss'], self.merged]
-        )
-        self.summary_writer.add_summary(merged, self.sw_step)
-        self.sw_step += 1
+        if self.need_summary:
+            _, loss, merged, self.global_step = self.sess.run(
+                [self.train_op, self.train_net['loss'],
+                 self.merged, self.global_step_op]
+            )
+            self.summary_writer.add_summary(merged, self.sw_step)
+            self.sw_step += 1
+        else:
+            _, loss, self.global_step = self.sess.run(
+                [self.train_op, self.train_net['loss'],
+                 self.global_step_op]
+            )
         return loss
 
     def predict(self, s):
@@ -107,9 +131,14 @@ class NN(object):
         self.summary.append(tf.summary.scalar('mse_loss', mse_loss))
         self.summary.append(tf.summary.scalar('l2_loss', l2_loss))
         self.summary.append(tf.summary.scalar('loss', loss))
-        global_step = tf.train.get_or_create_global_step()
+        self.global_step_op = tf.train.get_or_create_global_step()
         optimizer = tf.train.AdamOptimizer(learning_rate=1e-5)
-        train_op = optimizer.minimize(loss, global_step=global_step)
+        grads = optimizer.compute_gradients(loss)
+        self.summary.extend([
+            tf.summary.histogram('%s-grad' % g[1].name, g[0])
+            for g in grads if g[0] is not None])
+        train_op = optimizer.apply_gradients(
+            grads, global_step=self.global_step_op)
         return train_op
 
     def build_update_op(self, o_weights, t_weights):
@@ -120,9 +149,6 @@ class NN(object):
     def run(self):
         self.qi.run(self.sess, [self.sample_fn])
 
-
-if __name__ == '__main__':
-    from replay import Replay
-
-    replay = Replay(100)
-    nn = NN(replay.sample)
+    def close(self):
+        self.qi.close()
+        self.sess.close()
