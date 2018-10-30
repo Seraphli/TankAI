@@ -9,13 +9,13 @@ def test_score(ai):
     old_ai = AI('tank_old_ai', 5, False)
     old_ai.nn.load('./model')
     test_env = Env()
-    score = [0, 0]
-    for g_id in range(100):
+    score = [0, 0, 0]
+    for g_id in range(300):
         ai.logger.debug(f'=== Game start ===')
         end = test_env.reset()
         ai.logger.debug(f'game map {test_env.game.map}')
-        state = [[State(8, 3), State(8, 3)],
-                 [State(8, 3), State(8, 3)]]
+        state = [[State(12, 3), State(12, 3)],
+                 [State(12, 3), State(12, 3)]]
         s = [[0, 0], [0, 0]]
         a = [[0, 0], [0, 0]]
         r = [[0, 0], [0, 0]]
@@ -39,9 +39,9 @@ def test_score(ai):
                     a_mask = test_env.get_action(p, i)
                     ai.logger.debug(f'side:{p} index:{i} a_mask {a_mask}')
                     if p == 0:
-                        a[p][i] = ai.get_action(_state, a_mask)
+                        a[p][i], debug = ai.get_action(_state, a_mask)
                     else:
-                        a[p][i] = old_ai.get_action(_state, a_mask)
+                        a[p][i], debug = old_ai.get_action(_state, a_mask)
                     ai.logger.debug(f'side:{p} index:{i} a {a[p][i]}')
                     test_env.take_action(p, i, a[p][i])
             end = test_env.step()
@@ -57,6 +57,8 @@ def test_score(ai):
                         state[p][i].update(_s)
                         s_[p][i] = state[p][i].get_state()
                         r[p][i] = test_env.get_reward(p, i)
+                        if r[p][i] < 0:
+                            score[p] += r[p][i]
                         ai.logger.debug(f'side:{p} index:{i} r {r[p][i]}')
                         ai.logger.debug(f'side:{p} index:{i} t {t[p][i]}')
 
@@ -72,11 +74,13 @@ def test_score(ai):
         ai.logger.debug(f'Game num {g_id}')
         winner = test_env.get_winner()
         if winner >= 0:
-            score[winner] += 1
+            score[winner] += 2
+        if winner == -1:
+            score[2] += 1
     old_ai.nn.close()
     ai.logger.debug(f'=== Test end ===')
     ai.logger.info(f'Test score: {score}')
-    return score[0] > score[1]
+    return score[0] > score[1] * 1.2
 
 
 def main():
@@ -87,8 +91,8 @@ def main():
         ai.logger.debug(f'=== Game start ===')
         end = env.reset()
         ai.logger.debug(f'game map {env.game.map}')
-        state = [[State(8, 3), State(8, 3)],
-                 [State(8, 3), State(8, 3)]]
+        state = [[State(12, 3), State(12, 3)],
+                 [State(12, 3), State(12, 3)]]
         s = [[0, 0], [0, 0]]
         a = [[0, 0], [0, 0]]
         r = [[0, 0], [0, 0]]
@@ -111,7 +115,7 @@ def main():
                     _state = np.reshape(s[p][i], (1, *s[p][i].shape))
                     a_mask = env.get_action(p, i)
                     ai.logger.debug(f'side:{p} index:{i} a_mask {a_mask}')
-                    a[p][i] = ai.get_action(_state, a_mask)
+                    a[p][i], debug = ai.get_action(_state, a_mask)
                     ai.logger.debug(f'side:{p} index:{i} a {a[p][i]}')
                     env.take_action(p, i, a[p][i])
             end = env.step()
@@ -152,8 +156,10 @@ def main():
                 if saved:
                     # Test if model is better than before
                     if test_score(ai):
+                        ai.logger.info(f'Model saved')
                         ai.nn.save('./model/model.ckpt')
                 else:
+                    ai.logger.info(f'Model saved')
                     ai.nn.save('./model/model.ckpt')
                     saved = True
 

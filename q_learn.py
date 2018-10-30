@@ -21,4 +21,4 @@ class QLearn(object):
         _a = q * a_mask
         a_index, = np.where(_a == _a.max())
         a_index = np.random.choice(a_index)
-        return a_index
+        return a_index, {'q': q, 'random': random}

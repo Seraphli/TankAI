@@ -2,16 +2,18 @@ from tank.env import Env
 from q_learn import QLearn as AI
 from state import State
 import numpy as np
+import time
 
 ai = AI('tank_test', 5)
+ai.epsilon = 0.01
 ai.nn.load('./model')
 env = Env()
-for g_id in range(int(10)):
+for g_id in range(10):
     ai.logger.debug(f'=== Game start ===')
     end = env.reset()
     ai.logger.debug(f'game map {env.game.map}')
-    state = [[State(8, 3), State(8, 3)],
-             [State(8, 3), State(8, 3)]]
+    state = [[State(12, 3), State(12, 3)],
+             [State(12, 3), State(12, 3)]]
     s = [[0, 0], [0, 0]]
     a = [[0, 0], [0, 0]]
     r = [[0, 0], [0, 0]]
@@ -34,7 +36,7 @@ for g_id in range(int(10)):
                 _state = np.reshape(s[p][i], (1, *s[p][i].shape))
                 a_mask = env.get_action(p, i)
                 ai.logger.debug(f'side:{p} index:{i} a_mask {a_mask}')
-                a[p][i] = ai.get_action(_state, a_mask)
+                a[p][i], debug = ai.get_action(_state, a_mask)
                 ai.logger.debug(f'side:{p} index:{i} a {a[p][i]}')
                 env.take_action(p, i, a[p][i])
         end = env.step()
@@ -65,3 +67,5 @@ for g_id in range(int(10)):
     ai.logger.info(f'base {env.game.map[4, 0]}, {env.game.map[4, 8]}')
     ai.logger.debug(f'=== Game end ===')
     ai.logger.info(f'Game num {g_id}')
+    time.sleep(1)
+    env.save_replay('.')
