@@ -4,7 +4,7 @@ from state import State
 import numpy as np
 import time
 
-ai = AI('tank_test', 5)
+ai = AI('tank_test', 5, False)
 ai.epsilon = 0.01
 ai.nn.load('./model')
 env = Env()

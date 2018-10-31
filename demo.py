@@ -2,6 +2,26 @@ from tank.env import Env
 from q_learn import QLearn as AI
 from state import State
 import numpy as np
+import copy
+
+
+def destroy_base(r):
+    for p in [0, 1]:
+        for i in [0, 1]:
+            if r[p][i] == 2:
+                return True
+    return False
+
+
+def add_replay(env, _replay, exp):
+    s, a, r, t, s_ = exp
+    _replay.append([s, a, r, t, s_])
+    _replay.append([np.flipud(s), env.trans_action(a, False, True),
+                    r, t, np.flipud(s_)])
+    _replay.append([np.fliplr(s), env.trans_action(a, True, False),
+                    r, t, np.fliplr(s_)])
+    _replay.append([np.flip(s, (0, 1)), env.trans_action(a, True, True),
+                    r, t, np.flip(s_, (0, 1))])
 
 
 def test_score(ai):
@@ -88,6 +108,7 @@ def main():
     ai = AI()
     env = Env()
     for g_id in range(int(1e5)):
+        _replay = []
         ai.logger.debug(f'=== Game start ===')
         end = env.reset()
         ai.logger.debug(f'game map {env.game.map}')
@@ -133,8 +154,9 @@ def main():
                         r[p][i] = env.get_reward(p, i)
                         ai.logger.debug(f'side:{p} index:{i} r {r[p][i]}')
                         ai.logger.debug(f'side:{p} index:{i} t {t[p][i]}')
-                        ai.replay.add(s[p][i], a[p][i], r[p][i],
-                                      t[p][i], s_[p][i])
+                        add_replay(env, _replay,
+                                   copy.deepcopy([s[p][i], a[p][i], r[p][i],
+                                                  t[p][i], s_[p][i]]))
 
             ai.logger.debug(f'r {r}')
             ai.logger.debug(f't {t}')
@@ -144,10 +166,18 @@ def main():
         ai.logger.debug(f'step {env.game.step_count}')
         ai.logger.debug(f'base {env.game.map[4, 0]}, {env.game.map[4, 8]}')
         ai.logger.debug(f'=== Game end ===')
+
+        if destroy_base(r):
+            for _r in _replay:
+                ai.replay.add(*_r)
+        elif np.random.random() < 0.01:
+            for _r in _replay:
+                ai.replay.add(*_r)
+
         if g_id > 0 and g_id % 200 == 0:
             ai.logger.info(f'Game num {g_id}')
 
-        if len(ai.replay) > 32 * 20:
+        if len(ai.replay) > 32 * 100:
             for i in range(5):
                 ai.nn.train()
             if g_id % 2 == 0:
