@@ -121,8 +121,7 @@ class MCTSNode(TreeNode):
         self.wn_r.update(v, vl)
 
     def apply_vl(self, vl):
-        self.vls[0] += vl
-        self.vls[1] -= vl
+        self.wn_r.apply_vl(vl)
 
     def sorted_child(self):
         return sorted(self.children, key=self.sort_key,

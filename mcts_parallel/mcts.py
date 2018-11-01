@@ -135,6 +135,7 @@ class MCTSP(object):
             if _count < 3:
                 self.logger.info(node.str())
                 _count += 1
+            assert node.check_vls()
 
         selected = sorted_nodes[0]
         return selected
