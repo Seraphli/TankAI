@@ -1,6 +1,6 @@
 from concurrency.waldorf import WaldorfPool as Pool
 from tqdm import tqdm
-from mcts_node import MCTSNode, TreeManager
+from mcts.mcts_node import MCTSNode, TreeManager
 from mcts_parallel.rollout import random_rollout
 
 

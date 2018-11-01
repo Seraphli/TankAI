@@ -1,6 +1,6 @@
 from tank.env import Env
-from q_learn import QLearn as AI
-from state import State
+from qlearn.q_learn import QLearn as AI
+from qlearn.state import State
 import numpy as np
 import copy
 

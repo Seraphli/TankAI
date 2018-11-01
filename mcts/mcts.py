@@ -1,4 +1,4 @@
-from mcts_node import MCTSNode, TreeManager
+from mcts.mcts_node import MCTSNode, TreeManager
 import random
 
 

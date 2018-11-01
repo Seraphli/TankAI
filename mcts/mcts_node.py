@@ -1,4 +1,4 @@
-from tree_node import TreeNode
+from mcts.tree_node import TreeNode
 from math import sqrt, log
 
 

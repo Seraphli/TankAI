@@ -1,5 +1,5 @@
-from nn import NN
-from replay import Replay
+from qlearn.nn import NN
+from qlearn.replay import Replay
 import numpy as np
 from util import init_logger
 
