@@ -11,3 +11,6 @@ class TreeNode(object):
 
     def is_root(self):
         return self.up is None
+
+    def is_leaf(self):
+        return self.children == []

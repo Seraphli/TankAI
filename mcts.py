@@ -78,21 +78,6 @@ class MCTS(object):
                     roll_out += 1
                     player_move = 2
 
-            reward = False
-            rewards = []
-            for p in [0, 1]:
-                for index in [0, 1]:
-                    if env.get_reward(p, index) == -1:
-                        reward = True
-                    rewards.append(env.get_reward(p, index))
-            self.logger.debug(f'rewards {rewards}')
-            if roll_out < 2:
-                if reward:
-                    2 == 3
-                2 == 3
-            if roll_out == 0:
-                2 == 3
-
             winner = env.get_winner()
             self.logger.debug(f'winner {winner}')
             if winner >= 0:
