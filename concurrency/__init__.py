@@ -8,3 +8,15 @@ class ConPool(object):
 
     def reg_task(self, tasks):
         pass
+
+    def apply(self, func, args, callback):
+        pass
+
+    def apply_async(self, func, args, callback):
+        pass
+
+    def map(self, func, iterable):
+        pass
+
+    def join(self):
+        pass
