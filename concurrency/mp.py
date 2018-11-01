@@ -2,7 +2,7 @@ from concurrency import ConPool
 from multiprocessing import Pool
 
 
-class WaldorfPool(ConPool):
+class MPPool(ConPool):
     def setup(self):
         self._pool = Pool(self.limit)
 
